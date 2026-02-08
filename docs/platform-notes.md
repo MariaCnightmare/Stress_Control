@@ -26,3 +26,11 @@ Windows全体の負荷を把握したい場合は、Windows側で Stress_Control
 - psutil を基本依存とする
 - OS差分の吸収は analyzer 層で行い、上位（CLI/UI）へ漏らさない
 
+### Windows
+- "System Idle Process"(pid 0) は CPU 空き時間を表すため解析対象から除外する。
+- 解析ツール自身（stress-control）は自己影響を避けるためデフォルトで除外する。
+
+### WSL
+WSL2 で取得する CPU/メモリ使用率は Windows ホスト全体ではなく WSL 環境内を指す。
+Windows 全体の負荷把握は Windows 上で stress-control を実行すること。
+

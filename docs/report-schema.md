@@ -53,3 +53,4 @@
   - alerts_count: "up" | "down" | "flat"
 - summary: string (例: "悪化" | "改善" | "変化なし")
 
+Note: On multi-core systems, per-process CPU percentage may exceed 100.
