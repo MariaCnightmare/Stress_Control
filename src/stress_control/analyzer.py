@@ -67,6 +67,7 @@ def _analyze(procs, cpu_threshold, mem_threshold):
                 "mem_avg": p["mem"],
                 "cpu_peak": p["cpu_peak"],
                 "mem_peak": p["mem_peak"],
+                "sustain_count": max(p["cpu_over"], p["mem_over"]),
                 "samples": p["samples"],
                 "reasons": reasons,
                 "suggestion": suggest(reasons, p),
@@ -155,10 +156,11 @@ def collect_report(
 
     return {
         "time": datetime.now().isoformat(timespec="seconds"),
-        "report_version": "0.2",
+        "report_version": "1.0",
         "sampling": {
             "samples": samples,
             "interval_sec": interval,
+            "method": "avg/peak/sustain",
             "started_at": started_at.isoformat(timespec="seconds"),
         },
         "system": {
