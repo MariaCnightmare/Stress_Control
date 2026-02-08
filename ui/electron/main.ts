@@ -30,6 +30,49 @@ const isDev = !!process.env.VITE_DEV_SERVER_URL || process.env.NODE_ENV === "dev
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 
+type DebugWindowOptions = {
+  enabled: boolean;
+  transparent: boolean;
+  backgroundColor: string;
+  alwaysOnTop: boolean;
+  skipTaskbar: boolean;
+  frame: boolean;
+  resizable: boolean;
+  openDevTools: boolean;
+};
+
+function log(message: string, data?: Record<string, unknown>) {
+  const prefix = `[main ${new Date().toISOString()}]`;
+  if (data) {
+    console.log(prefix, message, data);
+  } else {
+    console.log(prefix, message);
+  }
+}
+
+function parseBool(value: string | undefined, defaultValue: boolean) {
+  if (value === undefined) return defaultValue;
+  if (value === "1" || value.toLowerCase() === "true") return true;
+  if (value === "0" || value.toLowerCase() === "false") return false;
+  return defaultValue;
+}
+
+function getDebugOptions(): DebugWindowOptions {
+  const enabled = isDev && parseBool(process.env.HUD_DEBUG, true);
+  const transparent = enabled ? parseBool(process.env.HUD_DEBUG_TRANSPARENT, false) : true;
+  const backgroundColor = enabled ? (process.env.HUD_DEBUG_BG ?? "#000000D9") : "#00000000";
+  return {
+    enabled,
+    transparent,
+    backgroundColor,
+    alwaysOnTop: enabled ? parseBool(process.env.HUD_DEBUG_ALWAYS_ON_TOP, true) : true,
+    skipTaskbar: enabled ? parseBool(process.env.HUD_DEBUG_SKIP_TASKBAR, false) : true,
+    frame: enabled ? parseBool(process.env.HUD_DEBUG_FRAME, true) : false,
+    resizable: enabled ? parseBool(process.env.HUD_DEBUG_RESIZABLE, true) : false,
+    openDevTools: enabled ? parseBool(process.env.HUD_DEBUG_DEVTOOLS, false) : false
+  };
+}
+
 function appRoot() {
   return app.getAppPath();
 }
@@ -75,27 +118,110 @@ function applyClickThrough(win: BrowserWindow, enabled: boolean) {
   win.setIgnoreMouseEvents(enabled, { forward: true });
 }
 
+function moveToPrimaryWorkArea(win: BrowserWindow) {
+  const display = screen.getPrimaryDisplay();
+  const { x, y, width, height } = display.workArea;
+  win.setBounds({ x, y, width, height });
+}
+
+async function loadRenderer(win: BrowserWindow) {
+  const devUrl = process.env.VITE_DEV_SERVER_URL;
+  const indexPath = path.join(appRoot(), "dist", "renderer", "index.html");
+  log("Renderer targets", { devUrl, indexPath });
+
+  if (isDev && devUrl) {
+    try {
+      await win.loadURL(devUrl);
+      return;
+    } catch (err) {
+      log("loadURL failed, falling back to loadFile", { error: String(err) });
+    }
+  }
+
+  if (fs.existsSync(indexPath)) {
+    try {
+      await win.loadFile(indexPath);
+      return;
+    } catch (err) {
+      log("loadFile failed, falling back to data URL", { error: String(err) });
+    }
+  } else {
+    log("index.html missing, falling back to data URL");
+  }
+
+  const fallbackHtml = `
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>Stress Control HUD (Fallback)</title>
+        <style>
+          html, body { margin: 0; padding: 0; background: #111; color: #eee; font-family: Segoe UI, Arial, sans-serif; }
+          .wrap { padding: 24px; }
+          h1 { margin: 0 0 12px; font-size: 20px; }
+          p { margin: 8px 0; line-height: 1.4; }
+          code { background: #222; padding: 2px 6px; border-radius: 4px; }
+        </style>
+      </head>
+      <body>
+        <div class="wrap">
+          <h1>HUD fallback page</h1>
+          <p>Renderer failed to load. Check the main process logs for details.</p>
+          <p>Dev URL: <code>${devUrl ?? "not set"}</code></p>
+          <p>Index path: <code>${indexPath}</code></p>
+        </div>
+      </body>
+    </html>
+  `.trim();
+
+  await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(fallbackHtml)}`);
+}
+
+function attachDebugLogging(win: BrowserWindow) {
+  win.on("ready-to-show", () => log("window ready-to-show"));
+  win.on("show", () => log("window show"));
+  win.on("focus", () => log("window focus"));
+  win.on("unresponsive", () => log("window unresponsive"));
+  win.on("render-process-gone", (_event, details) => log("render-process-gone", details as unknown as Record<string, unknown>));
+  win.webContents.on("did-finish-load", () => log("webContents did-finish-load"));
+  win.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+    log("webContents did-fail-load", { errorCode, errorDescription, validatedURL });
+  });
+  win.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    log("renderer console", { level, message, line, sourceId });
+  });
+}
+
 function createWindow() {
   const display = screen.getPrimaryDisplay();
   const { width, height } = display.bounds;
+  const debug = getDebugOptions();
 
   const preloadPath = fs.existsSync(path.join(appRoot(), "dist", "electron", "preload.js"))
     ? path.join(appRoot(), "dist", "electron", "preload.js")
     : path.join(appRoot(), "electron", "preload.ts");
+
+  log("App paths", {
+    appRoot: appRoot(),
+    configPath: configPath(),
+    reportPath: reportPath(),
+    preloadPath
+  });
+  log("Debug window options", debug);
 
   mainWindow = new BrowserWindow({
     width,
     height,
     x: 0,
     y: 0,
-    transparent: true,
-    frame: false,
-    resizable: false,
-    alwaysOnTop: true,
+    transparent: debug.transparent,
+    frame: debug.frame,
+    resizable: debug.resizable,
+    alwaysOnTop: debug.alwaysOnTop,
     fullscreenable: false,
-    skipTaskbar: true,
+    skipTaskbar: debug.skipTaskbar,
     hasShadow: false,
-    backgroundColor: "#00000000",
+    backgroundColor: debug.backgroundColor,
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
@@ -103,14 +229,24 @@ function createWindow() {
     }
   });
 
-  const cfg = loadConfig();
-  applyClickThrough(mainWindow, cfg.clickThrough);
+  attachDebugLogging(mainWindow);
 
-  if (isDev && process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-  } else {
-    const indexPath = path.join(appRoot(), "dist", "renderer", "index.html");
-    mainWindow.loadFile(indexPath);
+  const cfg = loadConfig();
+  applyClickThrough(mainWindow, debug.enabled ? false : cfg.clickThrough);
+
+  mainWindow.once("ready-to-show", () => {
+    moveToPrimaryWorkArea(mainWindow!);
+    mainWindow!.show();
+    mainWindow!.focus();
+  });
+
+  void loadRenderer(mainWindow);
+  moveToPrimaryWorkArea(mainWindow);
+  mainWindow.show();
+  mainWindow.focus();
+
+  if (debug.openDevTools) {
+    mainWindow.webContents.openDevTools({ mode: "detach" });
   }
 
   mainWindow.on("closed", () => {

@@ -36,6 +36,7 @@ function formatPct(value?: number) {
 }
 
 export default function App() {
+  const api = (window as Window).api;
   const [report, setReport] = useState<Report | null>(null);
   const [config, setConfig] = useState<Config>({
     showDynamic: true,
@@ -47,28 +48,34 @@ export default function App() {
     uiVersion: null
   });
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [apiAvailable, setApiAvailable] = useState(true);
 
   useEffect(() => {
     let mounted = true;
-    window.api.getConfig().then((cfg) => {
+    if (!api) {
+      setApiAvailable(false);
+      return;
+    }
+    api.getConfig().then((cfg) => {
       if (mounted) setConfig(cfg);
     });
-    window.api.getAppInfo().then((info) => {
+    api.getAppInfo().then((info) => {
       if (mounted) setAppInfo(info);
     });
-    const unsubscribe = window.api.onConfigUpdated((cfg) => {
+    const unsubscribe = api.onConfigUpdated((cfg) => {
       setConfig(cfg);
     });
     return () => {
       mounted = false;
       unsubscribe();
     };
-  }, []);
+  }, [api]);
 
   useEffect(() => {
     let active = true;
+    if (!api) return () => undefined;
     const readOnce = async () => {
-      const data = await window.api.readLatestReport();
+      const data = await api.readLatestReport();
       if (!active) return;
       if (data) {
         setReport(data as Report);
@@ -81,7 +88,7 @@ export default function App() {
       active = false;
       clearInterval(timer);
     };
-  }, []);
+  }, [api]);
 
   const score = report?.system?.stress_score ?? 0;
   const status = getStatus(score);
@@ -93,6 +100,23 @@ export default function App() {
       strokeDasharray: `${Math.round(290 * progress)} 290`
     };
   }, [progress]);
+
+  if (!apiAvailable) {
+    return (
+      <div className="hud-root">
+        <section className="hud-panel static">
+          <div className="panel-header">
+            <span className="title">HUD ERROR</span>
+            <span className="subtitle">preload not available</span>
+          </div>
+          <div className="section">
+            <div className="section-title">Details</div>
+            <div className="empty">window.api is undefined. Check preload build and load.</div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className={`hud-root ${config.clickThrough ? "click-through" : ""}`}>
