@@ -61,6 +61,12 @@ WSL(Ubuntu) でも同一コードで動作します。
 - クロスプラットフォーム（Windows/WSL）
 - 人間が最終判断する
 
+## Docs
+- [Design Notes](docs/design.md)
+- [Platform Notes](docs/platform-notes.md)
+- [Report Schema](docs/report-schema.md)
+
+
 ## 機能（v0.1）
 - CPU / メモリ使用率の取得
 - 高負荷プロセスの抽出（閾値ベース）
