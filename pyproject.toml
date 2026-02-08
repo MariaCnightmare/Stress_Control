@@ -1,0 +1,14 @@
+[project]
+name = "stress-control"
+version = "0.1.0"
+description = "Windows-first, safe task stress visibility tool (WSL supported)."
+requires-python = ">=3.10"
+dependencies = ["psutil>=5.9"]
+
+[project.scripts]
+stress-control = "cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
