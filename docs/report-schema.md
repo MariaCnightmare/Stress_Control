@@ -9,7 +9,9 @@
 - report_version: string (例: "1.0")
 - time: string (ISO 8601)
 - sampling: object
+- host: object
 - system: object
+- top_processes: array
 - alerts: array
 
 ## sampling
@@ -22,6 +24,25 @@
 - mem_avg: number (%)
 - stress_score: number (0..100)
 - alerts: array[string]  (例: "CPU high sustained")
+
+## host
+- hostname: string | null
+- os: string
+- os_version: string
+- cpu_model: string | null
+- cpu_cores: int | null
+- memory_total: number (bytes)
+- is_wsl: boolean
+
+## top_processes[] (top consumers)
+- pid: int
+- name: string
+- user: string | null
+- cpu_avg: number (%)
+- cpu_peak: number (%)
+- mem_avg: number (%)
+- mem_peak: number (%)
+- samples: int
 
 ## alerts[] (process alert)
 - pid: int
@@ -54,3 +75,6 @@
 - summary: string (例: "悪化" | "改善" | "変化なし")
 
 Note: On multi-core systems, per-process CPU percentage may exceed 100.
+
+## latest.json
+- `reports/latest.json` は最新レポートの常時上書き版（UI 監視用）

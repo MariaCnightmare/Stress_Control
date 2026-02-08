@@ -26,3 +26,7 @@ OS を直接制御する自動最適化は、文脈（ユーザーの意図・�
 - UI（Web/TUI）は後付け
 - 出力JSONの互換性を維持し、report_versionで進化させる
 
+## Process Exclusions
+- Windowsの "System Idle Process"(pid 0) はCPU空き時間を示すため解析対象から除外する。
+- 解析の自己影響を避けるため、実行中の stress-control 自身のプロセスはデフォルトで除外する。
+

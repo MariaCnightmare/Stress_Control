@@ -1,0 +1,33 @@
+{
+  "time": "2026-02-09T00:20:37",
+  "report_version": "1.0",
+  "sampling": {
+    "samples": 4,
+    "interval_sec": 0.2,
+    "method": "avg/peak/sustain",
+    "started_at": "2026-02-09T00:20:36"
+  },
+  "system": {
+    "cpu_avg": 0.0,
+    "mem_avg": 3.4,
+    "stress_score": 1.0,
+    "alerts": []
+  },
+  "alerts": [],
+  "trend": {
+    "previous_report": "report_20260209-001537.json",
+    "delta": {
+      "cpu_avg": -0.1,
+      "mem_avg": 0.1,
+      "stress_score": -0.1,
+      "alerts_count": 0
+    },
+    "direction": {
+      "cpu_avg": "flat",
+      "mem_avg": "flat",
+      "stress_score": "flat",
+      "alerts_count": "flat"
+    },
+    "summary": "変化なし"
+  }
+}

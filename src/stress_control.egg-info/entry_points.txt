@@ -1,0 +1,2 @@
+[console_scripts]
+stress-control = cli:main

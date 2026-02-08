@@ -1,5 +1,7 @@
 import os
 import time
+import platform
+import socket
 from datetime import datetime
 
 import psutil
@@ -185,6 +187,60 @@ def _stress_score(cpu_avg, mem_avg):
     return round(min(score, 100.0), 1)
 
 
+def _is_wsl():
+    release = platform.release().lower()
+    version = platform.version().lower()
+    return "microsoft" in release or "wsl" in release or "microsoft" in version
+
+
+def _host_info():
+    try:
+        hostname = socket.gethostname()
+    except Exception:
+        hostname = None
+
+    try:
+        cpu_model = platform.processor() or platform.uname().processor
+    except Exception:
+        cpu_model = None
+
+    cores = psutil.cpu_count(logical=False) or psutil.cpu_count(logical=True)
+    mem_total = psutil.virtual_memory().total
+
+    return {
+        "hostname": hostname,
+        "os": platform.system(),
+        "os_version": platform.version(),
+        "cpu_model": cpu_model,
+        "cpu_cores": cores,
+        "memory_total": mem_total,
+        "is_wsl": _is_wsl(),
+    }
+
+
+def _top_processes(procs, limit=5):
+    ranked = sorted(
+        procs,
+        key=lambda p: (p["cpu"], p["mem"], p["cpu_peak"], p["mem_peak"]),
+        reverse=True,
+    )
+    top = []
+    for p in ranked[: max(int(limit), 1)]:
+        top.append(
+            {
+                "pid": p["pid"],
+                "name": p["name"],
+                "user": p["user"],
+                "cpu_avg": p["cpu"],
+                "cpu_peak": p["cpu_peak"],
+                "mem_avg": p["mem"],
+                "mem_peak": p["mem_peak"],
+                "samples": p["samples"],
+            }
+        )
+    return top
+
+
 def collect_report(
     cpu_threshold=CPU_THRESHOLD,
     mem_threshold=MEM_THRESHOLD,
@@ -235,12 +291,13 @@ def collect_report(
             "method": "avg/peak/sustain",
             "started_at": started_at.isoformat(timespec="seconds"),
         },
+        "host": _host_info(),
         "system": {
             "cpu_avg": cpu_avg,
             "mem_avg": mem_avg,
             "stress_score": _stress_score(cpu_avg, mem_avg),
             "alerts": _system_alerts(cpu_avg, mem_avg),
         },
+        "top_processes": _top_processes(procs, limit=5),
         "alerts": alerts,
     }
-

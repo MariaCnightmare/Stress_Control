@@ -105,6 +105,46 @@ pip install -e .
 bash ./scripts/run_wsl.sh
 ```
 
+## UI (Electron HUD)
+
+`reports/latest.json` を監視して、透明オーバーレイ HUD を表示します。
+
+### UI セットアップ
+
+```powershell
+cd ui
+npm install
+```
+
+### UI 開発起動
+
+```powershell
+cd ui
+npm run dev
+```
+
+### UI ビルド/起動
+
+```powershell
+cd ui
+npm run build
+npm run start
+```
+
+### UI 設定
+
+`ui/config.json` に以下の設定が保存され、再起動後も維持されます。
+
+- `showDynamic`: 左上の動的 HUD 表示
+- `showStatic`: 右上の静的 HUD 表示
+- `clickThrough`: クリック透過（デフォルト ON）
+
+トグルはトレイメニュー必須で、ホットキーも用意しています。
+
+- `Ctrl+Alt+1`: Dynamic HUD
+- `Ctrl+Alt+2`: Static HUD
+- `Ctrl+Alt+0`: Click Through
+
 ## 将来構想
 
 * Web ダッシュボード（ローカルのみ）

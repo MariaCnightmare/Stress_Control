@@ -116,6 +116,12 @@ def main():
     path = os.path.join(report_dir, f"report_{ts}.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
+    latest_path = os.path.join(report_dir, "latest.json")
+    try:
+        with open(latest_path, "w", encoding="utf-8") as f:
+            json.dump(report, f, ensure_ascii=False, indent=2)
+    except OSError:
+        pass
 
     print(f"[OK] wrote: {path}")
     print(
