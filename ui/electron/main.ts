@@ -1,4 +1,16 @@
-import { app, BrowserWindow, Menu, Tray, globalShortcut, nativeImage, ipcMain, screen } from "electron";
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  Tray,
+  globalShortcut,
+  nativeImage,
+  ipcMain,
+  screen,
+  type MenuItem,
+  type MenuItemConstructorOptions,
+  type Event
+} from "electron";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -119,10 +131,10 @@ function updateConfig(partial: Partial<UiConfig>) {
 
 function refreshTray(cfg: UiConfig) {
   if (!tray) return;
-  const template = [
-    { label: "Dynamic HUD", type: "checkbox", checked: cfg.showDynamic, click: (item: any) => updateConfig({ showDynamic: item.checked }) },
-    { label: "Static HUD", type: "checkbox", checked: cfg.showStatic, click: (item: any) => updateConfig({ showStatic: item.checked }) },
-    { label: "Click Through", type: "checkbox", checked: cfg.clickThrough, click: (item: any) => updateConfig({ clickThrough: item.checked }) },
+  const template: MenuItemConstructorOptions[] = [
+    { label: "Dynamic HUD", type: "checkbox", checked: cfg.showDynamic, click: (item: MenuItem) => updateConfig({ showDynamic: item.checked }) },
+    { label: "Static HUD", type: "checkbox", checked: cfg.showStatic, click: (item: MenuItem) => updateConfig({ showStatic: item.checked }) },
+    { label: "Click Through", type: "checkbox", checked: cfg.clickThrough, click: (item: MenuItem) => updateConfig({ clickThrough: item.checked }) },
     { type: "separator" },
     { label: "Quit", click: () => app.quit() }
   ];
@@ -200,6 +212,6 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
 
-app.on("window-all-closed", (event) => {
+app.on("window-all-closed", (event: Event) => {
   event.preventDefault();
 });
