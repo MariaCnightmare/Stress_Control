@@ -34,3 +34,22 @@
 - reasons: array[string]
 - suggestion: string
 
+## sampling (追加)
+- started_at: string (ISO 8601)  ※サンプリング開始時刻（任意だが推奨）
+
+## trend (optional)
+前回レポートとの差分。存在しない場合も互換性を壊さない。
+
+- previous_report: string (例: "report_YYYYMMDD-HHMMSS.json")
+- delta: object
+  - cpu_avg: number
+  - mem_avg: number
+  - stress_score: number
+  - alerts_count: int
+- direction: object
+  - cpu_avg: "up" | "down" | "flat"
+  - mem_avg: "up" | "down" | "flat"
+  - stress_score: "up" | "down" | "flat"
+  - alerts_count: "up" | "down" | "flat"
+- summary: string (例: "悪化" | "改善" | "変化なし")
+

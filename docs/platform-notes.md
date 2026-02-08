@@ -17,6 +17,10 @@
 ### WSL特有
 - /proc 由来の詳細情報で補助できるが、クロスプラットフォーム性を優先して psutil を主軸にする
 - WSLのプロセスとWindows側のプロセス境界は文脈に注意（混同しない）
+WSL2 は軽量VMのため、WSL内で取得するメモリ使用率やCPU使用率は
+「Windows全体」ではなく「WSL環境内」を指す。
+
+Windows全体の負荷を把握したい場合は、Windows側で Stress_Control を実行すること。
 
 ## 設計ルール
 - psutil を基本依存とする
